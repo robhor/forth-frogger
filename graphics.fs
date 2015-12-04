@@ -20,9 +20,9 @@ require settings.fs
 : draw-black-line black-bg draw-empty-line ;
 
 : draw-rect { dx dy -- } \ Draws a rectangle at the current position with dimensions dx x dy
-    dy 0 DO ['] draw-empty-space dx times dx move-left 1 move-down LOOP ;
+    dy 0 DO ['] draw-empty-space dx times LOOP ;
 
-: draw-car red-bg 8 2 draw-rect ;
+: draw-car red-bg 8 1 draw-rect ;
 
 : draw-frog-space green-bg ."  " ;
 : draw-frog
