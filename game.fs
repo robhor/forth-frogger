@@ -1,68 +1,223 @@
 require settings.fs
 require graphics.fs
 
-char w constant up_key
-char a constant left_key
-char s constant down_key
-char d constant right_key
-char q constant quit_key
+char w constant up-key
+char a constant left-key
+char s constant down-key
+char d constant right-key
+char q constant quit-key
 
-18 constant level_height 
+\ helper to create enums
+: enum
+  create 0 ,
+  does> dup @ 1 rot +! constant
+;
 
-create collision_ary width height * cells allot
-create frog_pos width 2 / , level_height ,
+\ define obstacle type
+enum entity
+entity none
+entity cars
+entity logs
 
-: set-collision-ary-value { n1 n2 flag -- }
-	collision_ary width n2 * n1 + cells + flag swap ! ;
+-1 constant left
+ 1 constant right
 
-: get-collision-ary-value { n1 n2 -- flag }
-	collision_ary width n2 * n1 + cells + @ ;
+create collision-ary width height * cells allot
 
-: get-frog-pos ( -- n1 n2 )
-	frog_pos @ frog_pos cell+ @ ;
+3 constant min-car-length
+10 constant max-car-length
 
-: init-water-collision ( -- )
-	5 1 u+do
-		width 0 u+do
-			i j true set-collision-ary-value
-		loop
-	loop ;
+char w constant up-key
+char a constant left-key
+char s constant down-key
+char d constant right-key
+char q constant quit-key
+
+: water ( -- draw-one draw-xt passable obstacles )
+    ['] draw-water
+    ['] draw-water-line
+    false logs ;
+
+: gras ( -- draw-one draw-xt passable obstacles )
+    ['] draw-gras
+    ['] draw-gras-line
+    true none ;
+
+: street ( -- draw-one draw-xt passable obstacles )
+    ['] draw-street
+    ['] draw-street-line
+    true cars ;
+
+: street-white-line ( -- draw-one draw-xt passable obstacles )
+    ['] draw-white
+    ['] draw-white-line
+    true none ;
+
+: street-yellow-line ( -- draw-one draw-xt passable obstacles )
+    ['] draw-yellow
+    ['] draw-yellow-line
+    true none ;
+
+variable scene-length
+0 scene-length !
+
+variable cars-length 0 cars-length !
+
+0 constant top-offset
+
+: add-to-scene ( ex -- )
+    , scene-length dup @ 1+ swap ! ;
+
+create scene
+' water add-to-scene
+' water add-to-scene
+' gras add-to-scene
+' street-white-line add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street-yellow-line add-to-scene
+' street add-to-scene
+' street add-to-scene
+' street-white-line add-to-scene
+' gras add-to-scene
+' gras add-to-scene
+
+: level-height scene-length @ ;
+
+create frog-pos width 2 / , level-height 1- ,
+
+VARIABLE (RND)   
+utime drop (rnd) ! \ seed 
+
+: rnd ( -- n) 
+    (rnd) @ dup 13 lshift xor 
+    dup 17 rshift xor 
+    dup DUP 5 lshift xor (rnd) ! 
+;
+
+: rnd-between { min max -- n }
+    rnd max min - 1+ mod min + ;
+
+: save-car { x length line speed direction -- }
+    x , line , length , speed , direction ,
+    cars-length @ 1+ cars-length !
+    ;
+
+: generate-cars ( line -- )
+    0 1 rnd-between 0 = if left else right endif
+    1 4 rnd-between
+    { line direction speed }
+    
+    0 \ currently used space on the street
+    BEGIN
+        min-car-length max-car-length rnd-between \ length of car
+        ( used-space length )
+        dup ( used-space length length )
+        -rot ( length used-space length )
+        + ( length used-space+length )
+        dup width < ( length used-space fits )
+        if 
+            \ car fits, save it
+            ( length used-space )
+            2dup ( length used-space length x+length )
+            swap - ( length used-space x )
+            rot line speed direction ( used-space x length line speed direction )
+            save-car ( used-space )
+
+            \ add some free space after car
+            4 16 rnd-between +
+        else
+            ( length used-space )
+            swap drop ( used-space )
+        endif
+
+        ( used-space )
+        dup width >
+    UNTIL drop ;
+
+: init-cars ( -- )
+    scene-length @ 0 ?DO
+        scene i cells + @ execute { set-color draw-xt passable obstacles }
+        obstacles cars = if
+            \ generate cars!
+            i generate-cars
+        endif
+    LOOP ;
+
+CREATE cars-ary init-cars
+
+: draw-background ( -- )
+    scene-length @ 0 ?DO
+        scene i cells + @ execute { set-color draw-xt passable obstacles }
+        0 i top-offset + at-xy draw-xt execute
+    LOOP ;
+
+: fetch-frog-pos ( -- x y )
+    frog-pos @ frog-pos cell+ @ ;
 
 : draw-frog1 ( -- )
-	frog_pos @ frog_pos cell+ @
-	at-xy green ." #" ;
+    fetch-frog-pos at-xy green-bg white ." O" ;
 
-: draw-car1 { n1 n2 -- }
-	8 0 u+do
-		n1 i + n2 true set-collision-ary-value
-	loop
-	n1 n2 at-xy draw-car ;
+: car-at-index ( car-index -- car-addr )
+    5 * cells cars-ary + ;
 
 : draw-cars ( -- )
-	0 8 draw-car1 
-	10 9 draw-car1
-	20 11 draw-car1
-	5 12 draw-car1
-	;
+    cars-length @ 0 ?DO
+        i car-at-index ( car-addr )
+        dup cell+ @ top-offset +  ( car-addr y )
+        swap dup @ ( y car-addr x )
+        rot at-xy ( car-addr )
+        2 cells + @ 1 red-bg draw-rect
+    LOOP ;
 
-: draw-log { n1 n2 -- }
-	8 0 u+do
-		n1 i + n2 false set-collision-ary-value
-	loop
-	n1 n2 at-xy draw-car ;
-
-: draw-logs ( -- )
-	8 1 draw-log 
-	10 2 draw-log
-	15 3 draw-log
-	9 4 draw-log
-	;
-
-: check_collision ( -- flag )
-	get-frog-pos get-collision-ary-value ;
+: draw-scene ( -- )
+    draw-background
+    draw-cars ;
 
 : check-game-won ( -- flag )
-	frog_pos cell+ @ 0 = ;
+    frog-pos cell+ @ 0 = ;
+
+: collides-with-car ( car-index -- flag )
+    fetch-frog-pos { frog-x frog-y }
+    car-at-index
+    dup cell+ @ ( car-addr y )
+    frog-y = if
+        \ frog and car on same line
+        ( car-addr )
+        dup @ ( car-addr x )
+        swap 2 cells + @ ( x length )
+        over + ( start-x end-x )
+        frog-x > swap frog-x <= and
+    else
+        drop false
+    endif ;
+
+: frog-on-passable-environment ( -- flag )
+    fetch-frog-pos nip
+    cells scene + @ execute
+    drop nip nip
+    ;
+
+: check-car-collision ( -- flag )
+    false
+    cars-length @ 0 ?DO
+        i collides-with-car if
+            drop true UNLOOP EXIT
+        endif
+    LOOP ;
+
+: check-collision ( -- flag )
+    frog-on-passable-environment
+    check-car-collision
+    = ;
 
 : end-game
     1 height 2 - at-xy
@@ -70,73 +225,86 @@ create frog_pos width 2 / , level_height ,
     bye ;
 
 : next-frog-pos { n1 n2 -- n3 } \ calculates the next frog position
-	frog_pos cell n1 * + @ n2 + ;
+    frog-pos cell n1 * + @ n2 + ;
 
-: restore-scene { n1 n2 -- } \ TODO
-	n1 n2 at-xy 
-	n2 0 = n2 5 = n2 6 = n2 14 >= or or or if draw-gras endif
-	n2 0 > n2 5 < and if draw-water endif
-	n2 7 = n2 13 = or if white draw-dash endif
-	n2 10 = if yellow draw-dash endif 
-	n2 8 = n2 9 = n2 11 = n2 12 = or or or if draw-empty-space endif ;
-	
+: restore-scene { x y -- }
+    x y at-xy
+    scene y cells + @ execute
+    drop drop drop
+    execute
+    ;
+    
 : move-frog { n1 n2 -- } \ if n1=1 then up/down else left/right
-	frog_pos @ frog_pos cell+ @ restore-scene
+    frog-pos @ frog-pos cell+ @ restore-scene
 
-	\ keep frog within boundaries
-	n1 1 = if \ up-down
-		n1 n2 next-frog-pos 0 >=
-		n1 n2 next-frog-pos level_height <=
-		and if n1 n2 next-frog-pos frog_pos cell+ ! endif
-	else \ left-right
-		n1 n2 next-frog-pos 0 >=
-		n1 n2 next-frog-pos width <
-		and if n1 n2 next-frog-pos frog_pos ! endif
-	endif ;
+    \ keep frog within boundaries
+    n1 1 = if \ up-down
+        n1 n2 next-frog-pos 0 >=
+        n1 n2 next-frog-pos level-height <
+        and if n1 n2 next-frog-pos frog-pos cell+ ! endif
+    else \ left-right
+        n1 n2 next-frog-pos 0 >=
+        n1 n2 next-frog-pos width <
+        and if n1 n2 next-frog-pos frog-pos ! endif
+    endif ;
 
 : handle-key ( key -- )
-	case key 
-		up_key    of 1 -1 move-frog endof
-		down_key  of 1 1 move-frog endof
-		left_key  of 0 -1 move-frog endof
-		right_key of 0 1 move-frog endof
-		quit_key  of end-game endof
-	endcase ;
+    case key 
+        up-key    of 1 -1 move-frog endof
+        down-key  of 1  1 move-frog endof
+        left-key  of 0 -1 move-frog endof
+        right-key of 0  1 move-frog endof
+        quit-key  of end-game endof
+    endcase ;
 
-: move-car { n1 n2 -- }
-	\ missing col-ary update
-	n1 width mod n2 at-xy draw-car 
-	reset-colors ;
+: move-car { x y -- }
+    x width mod y at-xy draw-car ;
 
-: move-cars { n -- n1 }
-	0 8 at-xy draw-street
+: clear-car ( car-index -- )
+    car-at-index
+    dup @ ( car-addr x )
+    swap dup cell+ @ ( x car-addr y )
+    rot swap at-xy ( car-addr )
+    2 cells + @ 1 black-bg draw-rect ;
 
-	width n - 8 move-car
-	width n 3 * - 9 move-car
-	n 2 * 11 move-car
-	n 12 move-car
-	
-	n 1 + width mod ;
+: move-cars { tick -- }
+    cars-length @ 0 ?DO
+        i car-at-index ( car-addr )
+        dup 3 cells + @ ( car-addr speed )
+        tick swap mod 0= if
+            ( car-addr )
+            i clear-car
+            dup @ ( car-addr x )
+            swap dup 4 cells + @ ( x car-addr direction )
+            rot ( car-addr direction x )
+            + ( car-addr x+direction )
+            width mod
+            swap !
+        else
+            drop
+        endif
+    LOOP ;
 
 : start-game
-	draw-scene
-	." controls: WASD to move frog; q to quit game"
-	
-	init-water-collision
-	draw-cars
-	draw-logs	
+    page
+    draw-scene
+    reset-colors
+    0 scene-length @ at-xy ." controls: WASD to move frog; q to quit game"
 
-	0 begin
-		50 ms
+    0 begin
+        50 ms
+        1+
+        
+        key? if handle-key endif
+        dup move-cars
+        draw-cars
+        draw-frog1
 
-		key? if handle-key endif		
-		\ move-cars
-		draw-frog1	
-		
-		check_collision check-game-won or
-		
-	until
-		0 height 2 - at-xy
-		check-game-won if ." GAME WON" else ." GAME OVER" endif
-		end-game ; 
-	
+        width height at-xy \ move cursor highlight out of the way
+        
+        check-collision check-game-won or
+        
+    until
+        0 height 2 - at-xy
+        check-game-won if ." GAME WON" else ." GAME OVER" endif
+        end-game ; 
