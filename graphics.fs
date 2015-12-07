@@ -38,3 +38,21 @@ require settings.fs
     draw-empty-line
     draw-empty-line
     ;
+
+: draw-scene ( -- )
+    page
+	draw-gras-line
+    draw-water-line
+    draw-water-line
+    draw-water-line
+    draw-water-line
+    draw-gras-line
+    draw-gras-line
+    draw-white-line
+    draw-street
+    draw-white-line
+    draw-gras-line
+    draw-gras-line
+    draw-gras-line
+    draw-gras-line
+    draw-gras-line ;

@@ -1,91 +1,98 @@
 require settings.fs
 require graphics.fs
 
-create collision_ary width height * cells allot
-create frog_pos width 2 / , 17 ,
-
 char w constant up_key
 char a constant left_key
 char s constant down_key
 char d constant right_key
 char q constant quit_key
 
-: draw-scene ( -- )
-    page
-    draw-water-line
-    draw-water-line
-    draw-water-line
-    draw-water-line
-    draw-gras-line
-    draw-gras-line
-    draw-white-line
-    draw-street
-    draw-white-line
-    draw-gras-line
-    draw-gras-line
-    draw-gras-line
-    draw-gras-line
-    draw-gras-line ;
+18 constant level_height 
 
+create collision_ary width height * cells allot
+create frog_pos width 2 / , level_height ,
 
-: draw-frog1 ( -- )
-	frog_pos @ frog_pos cell+ @
-	at-xy ." #" ;
-
-: set-coll-ary { n1 n2 flag -- }
+: set-collision-ary-value { n1 n2 flag -- }
 	collision_ary width n2 * n1 + cells + flag swap ! ;
 
-: fetch-collision-ary-value { n1 n2 -- flag }
+: get-collision-ary-value { n1 n2 -- flag }
 	collision_ary width n2 * n1 + cells + @ ;
 
-: fetch-frog-pos ( -- n1 n2 )
+: get-frog-pos ( -- n1 n2 )
 	frog_pos @ frog_pos cell+ @ ;
 
 : init-water-collision ( -- )
-	4 0 u+do
+	5 1 u+do
 		width 0 u+do
-			i j true set-coll-ary
+			i j true set-collision-ary-value
 		loop
 	loop ;
 
+: draw-frog1 ( -- )
+	frog_pos @ frog_pos cell+ @
+	at-xy green ." #" ;
+
 : draw-car1 { n1 n2 -- }
 	8 0 u+do
-		n1 i + n2 true set-coll-ary
+		n1 i + n2 true set-collision-ary-value
 	loop
 	n1 n2 at-xy draw-car ;
 
 : draw-cars ( -- )
-	0 7 draw-car1 
-	10 8 draw-car1
-	20 10 draw-car1
-	5 11 draw-car1
+	0 8 draw-car1 
+	10 9 draw-car1
+	20 11 draw-car1
+	5 12 draw-car1
 	;
 
 : draw-log { n1 n2 -- }
 	8 0 u+do
-		n1 i + n2 false set-coll-ary
+		n1 i + n2 false set-collision-ary-value
 	loop
 	n1 n2 at-xy draw-car ;
 
 : draw-logs ( -- )
-	0 1 draw-log 
+	8 1 draw-log 
 	10 2 draw-log
-	20 0 draw-log
-	5 3 draw-log
+	15 3 draw-log
+	9 4 draw-log
 	;
 
-: check_collision ( -- n)
-	fetch-frog-pos fetch-collision-ary-value ;
+: check_collision ( -- flag )
+	get-frog-pos get-collision-ary-value ;
+
+: check-game-won ( -- flag )
+	frog_pos cell+ @ 0 = ;
 
 : end-game
     1 height 2 - at-xy
     reset-colors cr
     bye ;
 
-: move-frog { n1 n2 -- }
-	frog_pos @ frog_pos cell+ @ at-xy black-bg draw-empty-space
-	frog_pos cell n1 * + dup @ n2 + swap ! 
-	;
+: next-frog-pos { n1 n2 -- n3 } \ calculates the next frog position
+	frog_pos cell n1 * + @ n2 + ;
+
+: restore-scene { n1 n2 -- } \ TODO
+	n1 n2 at-xy 
+	n2 0 = n2 5 = n2 6 = n2 14 >= or or or if draw-gras endif
+	n2 0 > n2 5 < and if draw-water endif
+	n2 7 = n2 13 = or if white draw-dash endif
+	n2 10 = if yellow draw-dash endif 
+	n2 8 = n2 9 = n2 11 = n2 12 = or or or if draw-empty-space endif ;
+	
+: move-frog { n1 n2 -- } \ if n1=1 then up/down else left/right
+	frog_pos @ frog_pos cell+ @ restore-scene
+
+	\ keep frog within boundaries
+	n1 1 = if \ up-down
+		n1 n2 next-frog-pos 0 >=
+		n1 n2 next-frog-pos level_height <=
+		and if n1 n2 next-frog-pos frog_pos cell+ ! endif
+	else \ left-right
+		n1 n2 next-frog-pos 0 >=
+		n1 n2 next-frog-pos width <
+		and if n1 n2 next-frog-pos frog_pos ! endif
+	endif ;
 
 : handle-key ( key -- )
 	case key 
@@ -98,7 +105,8 @@ char q constant quit_key
 
 : move-car { n1 n2 -- }
 	\ missing col-ary update
-	n1 width mod n2 at-xy draw-car ;
+	n1 width mod n2 at-xy draw-car 
+	reset-colors ;
 
 : move-cars { n -- n1 }
 	0 7 at-xy draw-street
@@ -120,14 +128,15 @@ char q constant quit_key
 
 	0 begin
 		50 ms
-		
+
 		key? if handle-key endif		
 		\ move-cars
 		draw-frog1	
 		
-		check_collision
+		check_collision check-game-won or
 		
 	until
-		." GAME OVER"
+		0 height 2 - at-xy
+		check-game-won if ." GAME WON" else ." GAME OVER" endif
 		end-game ; 
 	
