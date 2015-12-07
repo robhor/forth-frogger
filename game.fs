@@ -109,12 +109,12 @@ create frog_pos width 2 / , level_height ,
 	reset-colors ;
 
 : move-cars { n -- n1 }
-	0 7 at-xy draw-street
+	0 8 at-xy draw-street
 
-	width n - 7 move-car
-	width n 3 * - 8 move-car
-	n 2 * 10 move-car
-	n 11 move-car
+	width n - 8 move-car
+	width n 3 * - 9 move-car
+	n 2 * 11 move-car
+	n 12 move-car
 	
 	n 1 + width mod ;
 
