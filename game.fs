@@ -305,6 +305,10 @@ CREATE cars-ary init-cars
         check-collision check-game-won or
         
     until
-        0 height 2 - at-xy
-        check-game-won if ." GAME WON" else ." GAME OVER" endif
-        end-game ; 
+        width 2 / 4 - height 2 / at-xy
+		." GAME OVER"
+        width height at-xy
+        BEGIN
+            key dup 13 = swap quit-key = or
+        UNTIL
+		end-game ; 
