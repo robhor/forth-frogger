@@ -308,8 +308,11 @@ CREATE cars-ary init-cars
         check-collision check-game-won or
         
     until
-        width 2 / 4 - height 2 / at-xy
-		." GAME OVER"
+        yellow-bg red 
+        width 2 / 4 - height 2 / 2dup 2dup
+        1- at-xy ."            "
+           at-xy ."  GAME OVER "
+        1+ at-xy ."            "
         width height at-xy
         BEGIN
             key dup 13 = swap quit-key = or
