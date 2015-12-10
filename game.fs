@@ -136,7 +136,7 @@ utime drop (rnd) ! \ seed
             save-car ( used-space )
 
             \ add some free space after car
-            4 16 rnd-between +
+            4 24 rnd-between +
         else
             ( length used-space )
             swap drop ( used-space )
