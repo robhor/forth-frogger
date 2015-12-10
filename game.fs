@@ -17,7 +17,6 @@ char q constant quit-key
 enum entity
 entity none
 entity cars
-entity logs
 
 -1 constant left
  1 constant right
@@ -36,7 +35,7 @@ char q constant quit-key
 : water ( -- draw-one draw-xt passable obstacles )
     ['] draw-water
     ['] draw-water-line
-    false logs ;
+    false cars ;
 
 : gras ( -- draw-one draw-xt passable obstacles )
     ['] draw-gras
@@ -69,6 +68,9 @@ variable cars-length 0 cars-length !
     , scene-length dup @ 1+ swap ! ;
 
 create scene
+' gras add-to-scene
+' gras add-to-scene
+' water add-to-scene
 ' water add-to-scene
 ' water add-to-scene
 ' gras add-to-scene
@@ -79,6 +81,7 @@ create scene
 ' street add-to-scene
 ' street add-to-scene
 ' street add-to-scene
+' street-yellow-line add-to-scene
 ' street add-to-scene
 ' street add-to-scene
 ' street add-to-scene
