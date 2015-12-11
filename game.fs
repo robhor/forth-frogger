@@ -1,5 +1,6 @@
 require settings.fs
 require graphics.fs
+require rnd.fs
 
 char w constant up-key
 char a constant left-key
@@ -97,18 +98,6 @@ create scene
 
 create frog-pos width 2 / , level-height 1- ,
 
-VARIABLE (RND)   
-utime drop (rnd) ! \ seed 
-
-: rnd ( -- n) 
-    (rnd) @ dup 13 lshift xor 
-    dup 17 rshift xor 
-    dup DUP 5 lshift xor (rnd) ! 
-;
-
-: rnd-between { min max -- n }
-    rnd max min - 1+ mod min + ;
-
 : save-car { x length line speed direction -- }
     x , line , length , speed , direction ,
     cars-length @ 1+ cars-length !
@@ -116,7 +105,7 @@ utime drop (rnd) ! \ seed
 
 : generate-cars ( line -- )
     0 1 rnd-between 0 = if left else right endif
-    1 4 rnd-between
+    min-speed max-speed rnd-between
     { line direction speed }
     
     0 \ currently used space on the street
@@ -136,7 +125,7 @@ utime drop (rnd) ! \ seed
             save-car ( used-space )
 
             \ add some free space after car
-            4 24 rnd-between +
+            min-separation max-separation rnd-between +
         else
             ( length used-space )
             swap drop ( used-space )
@@ -289,6 +278,15 @@ CREATE cars-ary init-cars
         endif
     LOOP ;
 
+: draw-game-over-sign
+    yellow-bg red 
+    width 2 / 4 - height 2 / 2dup 2dup
+    1- at-xy ."            "
+       at-xy ."  GAME OVER "
+    1+ at-xy ."            " ;
+
+: hide-cursor width height at-xy ;
+
 : start-game
     page
     draw-scene
@@ -297,24 +295,19 @@ CREATE cars-ary init-cars
 
     0 begin
         50 ms
-        1+
+        1+ \ increase tick counter
         
         key? if handle-key endif
         dup move-cars
         draw-cars
         draw-frog1
-
-        width height at-xy \ move cursor highlight out of the way
+        hide-cursor
         
         check-collision check-game-won or
         
     until
-        yellow-bg red 
-        width 2 / 4 - height 2 / 2dup 2dup
-        1- at-xy ."            "
-           at-xy ."  GAME OVER "
-        1+ at-xy ."            "
-        width height at-xy
+        draw-game-over-sign
+        hide-cursor
         BEGIN
             key dup 13 = swap quit-key = or
         UNTIL
