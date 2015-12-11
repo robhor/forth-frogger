@@ -148,7 +148,7 @@ utime drop (rnd) ! \ seed
 
 : init-cars ( -- )
     scene-length @ 0 ?DO
-        scene i cells + @ execute { set-color draw-xt passable obstacles }
+        scene i cells + @ execute { draw-one draw-xt passable obstacles }
         obstacles cars = if
             \ generate cars!
             i generate-cars
@@ -159,7 +159,7 @@ CREATE cars-ary init-cars
 
 : draw-background ( -- )
     scene-length @ 0 ?DO
-        scene i cells + @ execute { set-color draw-xt passable obstacles }
+        scene i cells + @ execute { draw-one draw-xt passable obstacles }
         0 i top-offset + at-xy draw-xt execute
     LOOP ;
 
@@ -267,8 +267,9 @@ CREATE cars-ary init-cars
     car-at-index
     dup @ ( car-addr x )
     swap dup cell+ @ ( x car-addr y )
-    rot swap at-xy ( car-addr )
-    2 cells + @ 1 black-bg draw-rect ;
+    rot swap dup -rot at-xy ( car-addr y )
+    cells scene + @ execute { draw-one draw-xt passable obstacles }
+    2 cells + @ draw-one swap times ;
 
 : move-cars { tick -- }
     cars-length @ 0 ?DO
