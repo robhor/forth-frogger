@@ -96,7 +96,9 @@ create scene
 
 : level-height scene-length @ ;
 
-create frog-pos width 2 / , level-height 1- ,
+create frog-pos 0 , 0 ,
+
+: reset-frog-pos width 2 / frog-pos ! level-height 1- frog-pos cell+ ! ;
 
 : save-car { x length line speed direction -- }
     x , line , length , speed , direction ,
@@ -287,10 +289,13 @@ CREATE cars-ary init-cars
 
 : hide-cursor width height at-xy ;
 
+Defer game-over-menu
+
 : start-game
     page
     draw-scene
     reset-colors
+    reset-frog-pos
     0 scene-length @ at-xy ." controls: WASD to move frog; q to quit game"
 
     0 begin
@@ -302,13 +307,19 @@ CREATE cars-ary init-cars
         draw-cars
         draw-frog1
         hide-cursor
-        
+
         check-collision check-game-won or
         
     until
-        draw-game-over-sign
-        hide-cursor
-        BEGIN
-            key dup 13 = swap quit-key = or
-        UNTIL
-		end-game ; 
+    game-over-menu ; 
+
+:noname
+    draw-game-over-sign
+    reset-colors
+    hide-cursor
+
+    BEGIN
+        key dup 13 = if clearstack start-game endif
+        quit-key =
+    UNTIL
+    end-game ; IS game-over-menu
