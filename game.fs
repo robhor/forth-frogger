@@ -215,7 +215,7 @@ Defer game-over-menu
 
 : draw-game-over-sign
     yellow-bg red 
-    width 2 / 6 - height 2 / 2dup 2dup
+    width 2 / 6 - scene-length @ 2 / 2dup 2dup
     1- at-xy ."            "
        at-xy ."  GAME OVER "
     1+ at-xy ."            " ;
