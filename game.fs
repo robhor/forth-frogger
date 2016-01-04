@@ -169,6 +169,30 @@ CREATE cars-ary init-cars
     cells scene + @ execute { draw-one draw-xt passable obstacles }
     2 cells + @ draw-one swap times ;
 
+: frog-on-log ( n -- flag ) \ true if frog is on log with index n
+	collides-with-car
+	frog-on-passable-environment false =
+	and	; 
+
+: move-frog-on-log ( n -- )
+	car-at-index ( car-addr )
+	dup 3 cells + @ ( car-addr speed )
+	over 4 cells + @ ( car-addr speed direction )
+	rot drop { speed direction }
+	speed direction * ( speed*direction ) \ negative for moving left, positive for moving right
+	
+	begin
+		dup 0 > if
+			0 1 move-frog \ move right
+			speed -
+		else
+			0 -1 move-frog \ move left
+			speed +
+		endif
+
+		dup 0 =
+	until ;
+
 : move-cars { tick -- }
     cars-length @ 0 ?DO
         i car-at-index ( car-addr )
@@ -182,6 +206,8 @@ CREATE cars-ary init-cars
             + ( car-addr x+direction )
             width mod
             swap !
+
+			i frog-on-log if i move-frog-on-log endif
         else
             drop
         endif
