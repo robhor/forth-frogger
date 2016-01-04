@@ -70,13 +70,24 @@ CREATE cars-ary init-cars
 : car-at-index ( car-index -- car-addr )
     5 * cells cars-ary + ;
 
+: cut-car-for-drawing ( length x -- length ) \ cutting length of car so that it fits into the line
+	{ length x }
+	length x + width > if 
+		length length x + width - -
+	else  
+		length 
+	endif ;
+
 : draw-cars ( -- )
     cars-length @ 0 ?DO
         i car-at-index ( car-addr )
         dup cell+ @ top-offset +  ( car-addr y )
         swap dup @ ( y car-addr x )
-        rot at-xy ( car-addr )
-        2 cells + @ 1 red-bg draw-rect
+        rot { x y } 
+		x y at-xy ( car-addr )
+        2 cells + @ ( length )
+		x cut-car-for-drawing
+		1 red-bg draw-rect
     LOOP ;
 
 : draw-scene ( -- )
@@ -165,9 +176,12 @@ CREATE cars-ary init-cars
     car-at-index
     dup @ ( car-addr x )
     swap dup cell+ @ ( x car-addr y )
-    rot swap dup -rot at-xy ( car-addr y )
+    rot swap dup -rot { x y }
+	x y at-xy ( car-addr y )
     cells scene + @ execute { draw-one draw-xt passable obstacles }
-    2 cells + @ draw-one swap times ;
+    2 cells + @ ( length )
+	x cut-car-for-drawing
+	draw-one swap times ;
 
 : frog-on-log ( n -- flag ) \ true if frog is on log with index n
 	collides-with-car
