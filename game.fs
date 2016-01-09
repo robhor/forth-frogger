@@ -136,9 +136,6 @@ CREATE cars-ary init-cars
     reset-colors cr
     bye ;
 
-: next-frog-pos { n1 n2 -- n3 } \ calculates the next frog position
-    frog-pos cell n1 * + @ n2 + ;
-
 : restore-scene { x y -- }
     x y at-xy
     scene y cells + @ execute
@@ -147,17 +144,18 @@ CREATE cars-ary init-cars
     ;
     
 : move-frog { n1 n2 -- } \ if n1=1 then up/down else left/right
-    frog-pos @ frog-pos cell+ @ restore-scene
+    fetch-frog-pos { x y }
+	x y restore-scene
 
     \ keep frog within boundaries
     n1 1 = if \ up-down
-        n1 n2 next-frog-pos 0 >=
-        n1 n2 next-frog-pos level-height <
-        and if n1 n2 next-frog-pos frog-pos cell+ ! endif
+        y n2 + 0 >=
+        y n2 + level-height <
+        and if y n2 + frog-pos cell+ ! endif
     else \ left-right
-        n1 n2 next-frog-pos 0 >=
-        n1 n2 next-frog-pos width <
-        and if n1 n2 next-frog-pos frog-pos ! endif
+        x n2 + 0 >=
+        x n2 + width <
+        and if x n2 + frog-pos ! endif
     endif ;
 
 : handle-key ( key -- )
@@ -190,22 +188,8 @@ CREATE cars-ary init-cars
 
 : move-frog-on-log ( n -- )
 	car-at-index ( car-addr )
-	dup 3 cells + @ ( car-addr speed )
-	over 4 cells + @ ( car-addr speed direction )
-	rot drop { speed direction }
-	speed direction * ( speed*direction ) \ negative for moving left, positive for moving right
-	
-	begin
-		dup 0 > if
-			0 1 move-frog \ move right
-			speed -
-		else
-			0 -1 move-frog \ move left
-			speed +
-		endif
-
-		dup 0 =
-	until ;
+	4 cells + @ ( direction )
+	0 swap move-frog ;
 
 : move-cars { tick -- }
     cars-length @ 0 ?DO
