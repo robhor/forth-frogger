@@ -231,6 +231,13 @@ CREATE cars-ary init-cars
 
 Defer game-over-menu
 
+: draw-game-won-sign
+    yellow-bg red 
+    width 2 / 6 - scene-length @ 2 / 2dup 2dup
+    1- at-xy ."            "
+       at-xy ."  GAME WON  "
+    1+ at-xy ."            " ;
+
 : start-game
     page
     draw-scene
@@ -251,13 +258,24 @@ Defer game-over-menu
         check-collision check-game-won or
         
     until
-    game-over-menu ; 
+	check-game-won if 
+		draw-game-won-sign 
+	else 
+		game-over-menu 
+	endif ; 
 
 : draw-game-over-sign
     yellow-bg red 
     width 2 / 6 - scene-length @ 2 / 2dup 2dup
     1- at-xy ."            "
        at-xy ."  GAME OVER "
+    1+ at-xy ."            " ;
+
+: draw-game-won-sign
+    yellow-bg red 
+    width 2 / 6 - scene-length @ 2 / 2dup 2dup
+    1- at-xy ."            "
+       at-xy ."  GAME WON  "
     1+ at-xy ."            " ;
 
 :noname
