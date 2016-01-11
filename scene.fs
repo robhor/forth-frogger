@@ -51,28 +51,30 @@ variable cars-length 0 cars-length !
 : add-to-scene ( ex -- )
     , scene-length dup @ 1+ swap ! ;
 
-create scene
-' gras add-to-scene
-' gras add-to-scene
-' water add-to-scene
-' water add-to-scene
-' water add-to-scene
-' gras add-to-scene
-' street-white-line add-to-scene
-' street add-to-scene
-' street add-to-scene
-' street add-to-scene
-' street add-to-scene
-' street-yellow-line add-to-scene
-' street add-to-scene
-' street add-to-scene
-' street add-to-scene
-' street add-to-scene
-' street-yellow-line add-to-scene
-' street add-to-scene
-' street add-to-scene
-' street-white-line add-to-scene
-' gras add-to-scene
-' gras add-to-scene
+: init-scene
+	['] gras add-to-scene \ finish lines
+	['] gras add-to-scene
+	1 4 rnd-between 0 ?DO \ 1-4 street or watersegments
+		0 1 rnd-between 0 = if 
+			\ water
+			2 4 rnd-between 0 ?DO
+				['] water add-to-scene
+			LOOP
+		else
+			\ street
+			['] street-white-line add-to-scene
+			2 4 rnd-between 0 ?DO
+				['] street add-to-scene
+			LOOP
+			['] street-white-line add-to-scene
+		endif
+		0 2 rnd-between 0 ?DO
+			['] gras add-to-scene
+		LOOP
+	LOOP
+	\ starting line 
+	['] gras add-to-scene ;
+
+create scene init-scene
 
 : level-height scene-length @ ;
