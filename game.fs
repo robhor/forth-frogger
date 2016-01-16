@@ -222,6 +222,13 @@ Defer game-over-menu
        at-xy ."  GAME WON  "
     1+ at-xy ."            " ;
 
+: draw-game-over-sign
+    yellow-bg red 
+    width 2 / 6 - scene-length @ 2 / 2dup 2dup
+    1- at-xy ."            "
+       at-xy ."  GAME OVER "
+    1+ at-xy ."            " ;
+
 : start-game
     page
     draw-scene
@@ -247,20 +254,6 @@ Defer game-over-menu
 	else 
 		game-over-menu 
 	endif ; 
-
-: draw-game-over-sign
-    yellow-bg red 
-    width 2 / 6 - scene-length @ 2 / 2dup 2dup
-    1- at-xy ."            "
-       at-xy ."  GAME OVER "
-    1+ at-xy ."            " ;
-
-: draw-game-won-sign
-    yellow-bg red 
-    width 2 / 6 - scene-length @ 2 / 2dup 2dup
-    1- at-xy ."            "
-       at-xy ."  GAME WON  "
-    1+ at-xy ."            " ;
 
 :noname
     draw-game-over-sign
